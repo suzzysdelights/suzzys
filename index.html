@@ -486,7 +486,7 @@
       </div>
 
       <div style="margin-bottom:14px;">
-        <div class="form-label" style="margin-bottom:8px;">Ingredients (pick from your Market)</div>
+        <div class="form-label" style="margin-bottom:8px;">Ingredients (optional — use a saved recipe or add manually)</div>
         <datalist id="market-options-datalist"><option value="1 KG Board"></option><option value="1 KG Box"></option><option value="2KG Box"></option><option value="All-purpose flour"></option><option value="Almond essence"></option><option value="Apple green colour"></option><option value="Baking powder"></option><option value="Baking soda"></option><option value="Blueberry Essence clear"></option><option value="Blueberry essence dark"></option><option value="Brown sugar"></option><option value="Butter (unsalted)"></option><option value="Butterscotch Essence"></option><option value="Cake flour"></option><option value="Caramel Cream Essence"></option><option value="Cardamom"></option><option value="Chocolate chips (milk or dark)"></option><option value="Cinnamon"></option><option value="Cocoa powder"></option><option value="Coconut essence"></option><option value="Coconut flour"></option><option value="Cooking oil"></option><option value="Cornstarch (corn flour)"></option><option value="Cream cheese"></option><option value="Crushed Oreos - 3Pieces"></option><option value="Dark chocolate (cooking)"></option><option value="Desiccated coconut"></option><option value="Eggs (tray)"></option><option value="Fondant (white)"></option><option value="Food colouring (gel)"></option><option value="Fresh cream (whipping)"></option><option value="Fresh milk"></option><option value="Grated carrots"></option><option value="Icing sugar"></option><option value="Instant coffee"></option><option value="Instant yeast"></option><option value="Lemon"></option><option value="Lemon essence"></option><option value="Mala"></option><option value="Margarine (Blue Band)"></option><option value="Milk compound"></option><option value="Mixed spices"></option><option value="Orange essence / oil"></option><option value="Orange essence colour"></option><option value="Passion clear essence"></option><option value="Peppermint clear"></option><option value="Pineapple essence clear"></option><option value="Raisins (optional)"></option><option value="Red velvet colour"></option><option value="Salt"></option><option value="Self-raising flour"></option><option value="Sprinkles"></option><option value="Standard HBD Topper"></option><option value="Strawberry clear essence"></option><option value="Strawberry dark"></option><option value="Sugar (white)"></option><option value="Sweetened condensed milk"></option><option value="Vanilla essence"></option><option value="Vinegar"></option><option value="Whipping Cream - Pristine"></option><option value="White chocolate"></option><option value="Yellow colour"></option></datalist>
         <div class="ing-header">
           <span>Ingredient</span><span>Qty</span><span>Unit</span><span>Cost</span><span></span>
@@ -517,6 +517,11 @@
           <label class="form-label">Margin %</label>
           <input class="form-input" id="o-margin" type="number" min="0" max="200" value="30" oninput="recalc()">
         </div>
+      </div>
+      <div class="form-group" style="margin:10px 0 14px;">
+        <label class="form-label">Agreed order amount (KES) — optional</label>
+        <input class="form-input" id="o-manual-total" type="number" min="0" step="1" placeholder="Leave blank to calculate from ingredients, labour and margin" oninput="recalc()">
+        <div style="font-size:11px;color:var(--text3);margin-top:5px;line-height:1.5;">For orders where you already know the selling price, enter it here. You can leave ingredients empty. When this amount is entered, it becomes the order total and overrides the costing calculation.</div>
       </div>
       <div class="form-grid">
         <div class="form-group">
@@ -3380,12 +3385,15 @@ function recalc() {
   const depPct  = parseFloat(document.getElementById('o-deposit-pct').value) || 50;
   const base = ingCost + addonTotal + labour;
   const marginAmt = base * margin / 100;
-  const total = Math.round(base + marginAmt);
+  const calculatedTotal = Math.round(base + marginAmt);
+  const manualRaw = document.getElementById('o-manual-total')?.value;
+  const hasManualTotal = manualRaw !== undefined && manualRaw !== '' && Number.isFinite(Number(manualRaw));
+  const total = hasManualTotal ? Math.max(0, Math.round(Number(manualRaw))) : calculatedTotal;
   const deposit = Math.round(total * depPct / 100);
   document.getElementById('t-ingredients').textContent = kes(ingCost + addonTotal);
   document.getElementById('t-labour').textContent = kes(labour);
   document.getElementById('t-margin').textContent = kes(marginAmt) + ' (' + margin + '%)';
-  document.getElementById('t-total').textContent = kes(total);
+  document.getElementById('t-total').textContent = kes(total) + (hasManualTotal ? ' · agreed amount' : '');
   document.getElementById('t-deposit').textContent = kes(deposit) + ' (' + depPct + '%)';
   document.getElementById('t-balance').textContent = kes(total - deposit);
   const warn = document.getElementById('t-warn');
@@ -3434,7 +3442,10 @@ function getFormData() {
   const margin  = parseFloat(document.getElementById('o-margin').value) || 0;
   const depPct  = parseFloat(document.getElementById('o-deposit-pct').value) || 50;
   const base = ingCost + addonTotal + labour;
-  const total = Math.round(base + base * margin / 100);
+  const calculatedTotal = Math.round(base + base * margin / 100);
+  const manualRaw = document.getElementById('o-manual-total')?.value;
+  const hasManualTotal = manualRaw !== undefined && manualRaw !== '' && Number.isFinite(Number(manualRaw));
+  const total = hasManualTotal ? Math.max(0, Math.round(Number(manualRaw))) : calculatedTotal;
   return {
     id: Date.now().toString() + '_' + Math.floor(Math.random()*9999),
     created_at: new Date().toISOString(),
@@ -3451,6 +3462,7 @@ function getFormData() {
     ingredients: resolvedIngredients,
     addons: resolvedAddons,
     labour, margin_pct: margin, deposit_pct: depPct,
+    manual_total: hasManualTotal ? total : null,
     total,
     deposit_received: 0,
     balance_received: 0,
@@ -3513,6 +3525,8 @@ function resetOrderForm() {
   document.getElementById('o-margin').value = settings.defaultMargin || 30;
   document.getElementById('o-deposit-pct').value = settings.defaultDeposit || 50;
   document.getElementById('o-labour').value = 0;
+  const manualTotalEl = document.getElementById('o-manual-total');
+  if (manualTotalEl) manualTotalEl.value = '';
   const loadEl = document.getElementById('o-load-recipe');
   if (loadEl) loadEl.value = '';
   recalc();
@@ -3538,6 +3552,8 @@ function editOrder(id) {
   document.getElementById('o-labour').value = o.labour || 0;
   document.getElementById('o-margin').value = o.margin_pct || 30;
   document.getElementById('o-deposit-pct').value = o.deposit_pct || 50;
+  const manualTotalEl = document.getElementById('o-manual-total');
+  if (manualTotalEl) manualTotalEl.value = o.manual_total ?? '';
 
   // Restore ingredients (re-link to market by marketId)
   ingredients = (o.ingredients || []).map(i => {
