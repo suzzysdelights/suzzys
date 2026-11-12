@@ -1477,7 +1477,7 @@
 
     <div class="card">
       <div class="card-title" style="margin-bottom:14px;">Your saved recipes</div>
-      <div id="recipes-list"><div class="order-row" style="align-items:flex-start;">
+      <div style="margin-bottom:12px"><button class="btn btn-primary" id="add-recipe-editor-btn" onclick="openRecipeEditor()">＋ Add recipe</button></div><div id="recipes-list"><div class="order-row" style="align-items:flex-start;">
           <div class="order-info">
             <div class="order-name">Black Forest Cake <span class="badge badge-complete">✓ fully priced</span></div>
             <div class="order-desc">10 ingredients · ingredients KES 269 · Whisked sponge · 9 eggs, separated · 170°C • 35–40 min</div>
@@ -2745,101 +2745,52 @@
 
   <!-- SETUP -->
   <div id="setup" class="section">
-    <div class="section-title" style="margin-bottom:16px;">Setup</div>
-
-    <div class="card">
-      <div class="card-header">
-        <span class="card-title">Supabase sync</span>
-        <span class="conn-badge pending" id="conn-badge2"><span class="dot"></span> Not connected</span>
-      </div>
-      <div class="info-box">Connect a free Supabase database so your orders are safe and accessible from any device — including your phone.</div>
-      <div class="form-group">
-        <label class="form-label">Supabase project URL</label>
-        <input class="form-input" id="sb-url" placeholder="https://xxxxxxxxxxxx.supabase.co" autocomplete="off">
-      </div>
-      <div class="form-group">
-        <label class="form-label">Supabase anon key (public)</label>
-        <input class="form-input" id="sb-key" type="password" placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..." autocomplete="off">
-      </div>
-      <button class="btn btn-primary" onclick="testConnection()" style="margin-bottom:10px;">🔌 Test &amp; save connection</button>
-      <div id="conn-result" style="font-size:12px;color:var(--text2);"></div>
+    <div class="section-title" style="margin-bottom:16px;">Setup &amp; administration</div>
+    <div class="card" id="cloud-status-card">
+      <div class="card-header"><span class="card-title">Cloud connection</span><span class="conn-badge pending" id="conn-badge2"><span class="dot"></span> Checking…</span></div>
+      <div class="order-desc">Your bakery records are synchronised with Supabase. No connection details need to be entered here.</div>
     </div>
-
-    <div class="card">
-      <div class="card-title" style="margin-bottom:14px;">One-time database setup (5 min)</div>
-      <div class="setup-step">
-        <div class="step-num">1</div>
-        <div>
-          <div class="step-title">Create a free Supabase account</div>
-          <div class="step-desc">Go to <a href="https://supabase.com/" target="_blank">supabase.com</a> → New project → pick a name → choose region <strong>Europe (Frankfurt)</strong> — closest to Kenya.</div>
-        </div>
-      </div>
-      <div class="setup-step">
-        <div class="step-num">2</div>
-        <div>
-          <div class="step-title">Run this SQL in the SQL editor</div>
-          <div class="step-desc">In your project → SQL Editor → New query → paste this → Run:</div>
-          <pre class="sql">create table orders (
-  id uuid default gen_random_uuid() primary key,
-  created_at timestamptz default now(),
-  customer text not null,
-  phone text,
-  product text not null,
-  delivery_date date,
-  ingredients jsonb default '[]',
-  labour numeric default 0,
-  margin_pct numeric default 30,
-  deposit_pct numeric default 50,
-  total numeric default 0,
-  deposit_paid boolean default false,
-  balance_paid boolean default false,
-  notes text,
-  status text default 'pending'
-);</pre>
-          <button class="btn btn-sm" onclick="copySql()" style="margin-top:8px;">📋 Copy SQL</button>
-        </div>
-      </div>
-      <div class="setup-step">
-        <div class="step-num">3</div>
-        <div>
-          <div class="step-title">Copy your credentials</div>
-          <div class="step-desc">Project Settings → API → copy <strong>Project URL</strong> and <strong>anon / public key</strong> → paste into the fields above → Test connection.</div>
-        </div>
-      </div>
-    </div>
-
-    <div class="card">
+    <div class="card" id="business-settings-card">
       <div class="card-title" style="margin-bottom:14px;">Business settings</div>
-      <div class="form-group">
-        <label class="form-label">Bakery name</label>
-        <input class="form-input" id="biz-name" placeholder="e.g. Sweet by Amina">
-      </div>
-      <div class="form-group">
-        <label class="form-label">Your M-Pesa / WhatsApp number</label>
-        <input class="form-input" id="biz-phone" placeholder="0712 345 678">
-      </div>
+      <div class="form-group"><label class="form-label">Bakery name</label><input class="form-input" id="biz-name" placeholder="Suzzy’s Delights"></div>
+      <div class="form-group"><label class="form-label">M-Pesa / WhatsApp number</label><input class="form-input" id="biz-phone" placeholder="07xx xxx xxx"></div>
       <div class="form-grid">
-        <div class="form-group">
-          <label class="form-label">M-Pesa Paybill / Business no.</label>
-          <input class="form-input" id="biz-paybill" placeholder="e.g. 542542">
-        </div>
-        <div class="form-group">
-          <label class="form-label">Account number</label>
-          <input class="form-input" id="biz-account" placeholder="e.g. 510172">
-        </div>
+        <div class="form-group"><label class="form-label">M-Pesa Paybill / Business no.</label><input class="form-input" id="biz-paybill"></div>
+        <div class="form-group"><label class="form-label">Account number</label><input class="form-input" id="biz-account"></div>
       </div>
-      <div class="form-group">
-        <label class="form-label">Default margin %</label>
-        <input class="form-input" id="biz-margin" type="number" value="30">
-      </div>
-      <div class="form-group">
-        <label class="form-label">Default deposit %</label>
-        <input class="form-input" id="biz-deposit" type="number" min="0" max="100" value="50">
-      </div>
-      <button class="btn btn-primary" onclick="saveSettings()">💾 Save settings</button>
-      <div id="settings-result" style="font-size:12px;margin-top:8px;"></div>
+      <div class="form-group"><label class="form-label">Default margin %</label><input class="form-input" id="biz-margin" type="number" min="0"></div>
+      <div class="form-group"><label class="form-label">Default deposit %</label><input class="form-input" id="biz-deposit" type="number" min="0" max="100"></div>
+      <button class="btn btn-primary" onclick="saveSettings()">💾 Save business settings</button><div id="settings-result" style="font-size:12px;margin-top:8px;"></div>
+    </div>
+    <div class="card" id="user-management-card">
+      <div class="card-title" style="margin-bottom:6px;">User management</div>
+      <div class="order-desc" style="margin-bottom:14px;">Create assistant login accounts. Assistants can manage orders, recipes and ingredient prices, but cannot change business settings or manage users.</div>
+      <div class="form-group"><label class="form-label">Assistant email</label><input class="form-input" id="assistant-email" type="email" placeholder="assistant@example.com" autocomplete="off"></div>
+      <div class="form-group"><label class="form-label">Temporary password</label><input class="form-input" id="assistant-password" type="password" placeholder="At least 8 characters" autocomplete="new-password"></div>
+      <button class="btn btn-primary" id="create-assistant-btn" onclick="createAssistantUser()">＋ Create assistant account</button>
+      <div id="user-result" style="font-size:12px;margin-top:10px;"></div>
+      <div style="margin-top:16px"><div class="form-label">Bakery accounts</div><div id="bakery-user-list" class="order-desc">Loading accounts…</div></div>
+    </div>
+    <div class="card" id="account-security-card">
+      <div class="card-title" style="margin-bottom:8px;">Account &amp; security</div>
+      <div class="order-desc">Your sign-in is managed securely by Supabase. Use the sign-out button in the page header when you finish working.</div>
     </div>
   </div>
+</div>
+
+<!-- Recipe editor -->
+<div class="modal-bg" id="recipe-editor-modal" style="display:none;" onclick="if(event.target===this)closeRecipeEditor()">
+ <div class="modal" style="max-width:760px;max-height:90vh;overflow:auto">
+  <div class="modal-header"><span class="modal-title" id="recipe-editor-title">Add recipe</span><button class="btn btn-sm" onclick="closeRecipeEditor()">✕</button></div>
+  <input type="hidden" id="recipe-edit-id">
+  <div class="form-group"><label class="form-label">Recipe name</label><input class="form-input" id="recipe-edit-name" placeholder="e.g. Vanilla sponge"></div>
+  <div class="form-group"><label class="form-label">Notes / method (optional)</label><input class="form-input" id="recipe-edit-note" placeholder="Baking temperature, yield, method…"></div>
+  <div class="form-group"><label class="form-label">Labour cost (KES)</label><input class="form-input" id="recipe-edit-labour" type="number" min="0" value="0"></div>
+  <div class="card-title" style="margin:16px 0 8px">Ingredients</div>
+  <div id="recipe-edit-lines"></div>
+  <div class="btn-row" style="margin-top:10px"><button class="btn btn-sm" onclick="addRecipeEditorLine()">＋ Add ingredient</button><button class="btn btn-primary" onclick="saveRecipeEditor()">💾 Save recipe</button><button class="btn btn-sm" onclick="closeRecipeEditor()">Cancel</button></div>
+  <div id="recipe-editor-error" style="font-size:12px;color:var(--red);margin-top:8px"></div>
+ </div>
 </div>
 
 <!-- WhatsApp Preview Modal -->
@@ -2903,9 +2854,33 @@ async function finishBakeryLogin(session){
   applyBranding(); document.getElementById('o-margin').value=settings.defaultMargin||30; document.getElementById('o-deposit-pct').value=settings.defaultDeposit||50;
   renderIngredients();renderAddons();recalc();renderDashboard();renderOrders(currentFilter);renderMarket();renderRecipes();renderMarketDatalist();renderRecipeDropdown();
   updateConnBadges(true);
+  applyRolePermissions();
   if(!document.getElementById('signout-bakery')){const b=document.createElement('button');b.id='signout-bakery';b.className='btn btn-sm';b.textContent='Sign out';b.style.marginLeft='8px';b.onclick=bakeryLogout;document.querySelector('.header').appendChild(b);}
   toast('✓ Signed in — cloud data loaded');
  }catch(e){document.getElementById('auth-gate').style.display='flex';authMessage(e.message||'Could not load bakery profile.');}
+}
+function applyRolePermissions(){
+ const owner=bakeryRole==='owner';
+ ['business-settings-card','user-management-card','account-security-card'].forEach(id=>{const el=document.getElementById(id);if(el)el.style.display=owner?'':'none';});
+ const setupNav=[...document.querySelectorAll('.nav-btn')].find(b=>(b.getAttribute('onclick')||'').includes("'setup'"));
+ if(setupNav)setupNav.style.display=owner?'':'none';
+ if(owner)loadBakeryUsers();
+}
+async function loadBakeryUsers(){
+ const el=document.getElementById('bakery-user-list');if(!el||!sbClient||bakeryRole!=='owner')return;
+ const {data,error}=await sbClient.from('bakery_users').select('email,role').order('email');
+ if(error){el.textContent='Could not load accounts: '+error.message;return;}
+ el.innerHTML=(data||[]).map(u=>`<div style="padding:7px 0;border-bottom:1px solid var(--border)"><strong>${h(u.email||'Account')}</strong> · ${h(u.role)}</div>`).join('')||'No accounts found.';
+}
+async function createAssistantUser(){
+ const email=document.getElementById('assistant-email').value.trim();const password=document.getElementById('assistant-password').value;const out=document.getElementById('user-result');const btn=document.getElementById('create-assistant-btn');
+ if(bakeryRole!=='owner'){out.textContent='Only the owner can create accounts.';return;}
+ if(!email||!/^\S+@\S+\.\S+$/.test(email)){out.textContent='Enter a valid email address.';return;}
+ if(password.length<8){out.textContent='Use a temporary password of at least 8 characters.';return;}
+ btn.disabled=true;out.textContent='Creating account…';
+ try{const {data,error}=await sbClient.functions.invoke('admin-create-user',{body:{email,password,role:'assistant'}});if(error)throw error;if(data?.error)throw new Error(data.error);out.textContent='Assistant account created. Ask them to sign in and change their password.';document.getElementById('assistant-email').value='';document.getElementById('assistant-password').value='';await loadBakeryUsers();}
+ catch(e){out.textContent='Could not create account. The secure admin-create-user function must be deployed first. '+(e.message||'');}
+ finally{btn.disabled=false;}
 }
 async function bakeryLogout(){ if(sbClient) await sbClient.auth.signOut(); cloudReady=false;bakeryRole=null;document.getElementById('auth-gate').style.display='flex';document.getElementById('signout-bakery')?.remove();updateConnBadges(false); }
 async function loadCloudOrders(){
@@ -4278,6 +4253,46 @@ function saveAsRecipe() {
   toast('✓ Recipe saved');
 }
 
+let recipeEditorLines = [];
+function openRecipeEditor(id='') {
+ const r = id ? recipes.find(x=>x.id===id) : null;
+ document.getElementById('recipe-editor-title').textContent = r ? 'Edit recipe' : 'Add recipe';
+ document.getElementById('recipe-edit-id').value = r?.id || '';
+ document.getElementById('recipe-edit-name').value = r?.name || '';
+ document.getElementById('recipe-edit-note').value = r?.note || '';
+ document.getElementById('recipe-edit-labour').value = r?.labour ?? 0;
+ recipeEditorLines = (r?.ingredients || []).map(x=>({...x}));
+ if(!recipeEditorLines.length) recipeEditorLines=[{marketId:'',name:'',qty:'',unit:'g'}];
+ renderRecipeEditorLines(); document.getElementById('recipe-editor-error').textContent='';
+ document.getElementById('recipe-editor-modal').style.display='flex';
+}
+function closeRecipeEditor(){document.getElementById('recipe-editor-modal').style.display='none';}
+function addRecipeEditorLine(){recipeEditorLines.push({marketId:'',name:'',qty:'',unit:'g'});renderRecipeEditorLines();}
+function renderRecipeEditorLines(){
+ const el=document.getElementById('recipe-edit-lines'); if(!el)return;
+ const opts='<option value="">Choose ingredient…</option>'+market.slice().sort((a,b)=>a.name.localeCompare(b.name)).map(m=>`<option value="${h(m.id)}">${h(m.name)}</option>`).join('');
+ el.innerHTML=recipeEditorLines.map((l,i)=>`<div class="form-grid" style="grid-template-columns:minmax(140px,2fr) minmax(65px,.7fr) minmax(75px,.8fr) 36px;gap:7px;align-items:end;margin-bottom:8px">
+ <div class="form-group"><label class="form-label">Ingredient</label><select class="form-input" onchange="setRecipeEditorField(${i},'marketId',this.value)">${opts}</select><input class="form-input" style="margin-top:5px" placeholder="Or type a custom ingredient" value="${h(l.name||'')}" oninput="setRecipeEditorField(${i},'name',this.value)"></div>
+ <div class="form-group"><label class="form-label">Quantity</label><input class="form-input" type="number" min="0" step="any" value="${h(l.qty??'')}" oninput="setRecipeEditorField(${i},'qty',this.value)"></div>
+ <div class="form-group"><label class="form-label">Unit</label><input class="form-input" value="${h(l.unit||'')}" placeholder="g, ml, pcs" oninput="setRecipeEditorField(${i},'unit',this.value)"></div>
+ <button class="btn btn-sm" style="margin-bottom:2px" onclick="removeRecipeEditorLine(${i})" title="Remove ingredient">✕</button></div>`).join('');
+ recipeEditorLines.forEach((l,i)=>{const sel=el.children[i]?.querySelector('select');if(sel)sel.value=l.marketId||'';});
+}
+function setRecipeEditorField(i,k,v){const l=recipeEditorLines[i];if(!l)return;l[k]=k==='qty'?(v===''?'':Number(v)):v;if(k==='marketId'){const m=market.find(x=>x.id===v);if(m){l.name=m.name;l.unit=l.unit||baseCode(m);renderRecipeEditorLines();}}}
+function removeRecipeEditorLine(i){recipeEditorLines.splice(i,1);renderRecipeEditorLines();}
+function saveRecipeEditor(){
+ const name=document.getElementById('recipe-edit-name').value.trim();
+ const lines=recipeEditorLines.filter(l=>(l.marketId||l.name?.trim())&&Number(l.qty)>0).map(l=>{const m=market.find(x=>x.id===l.marketId);return {marketId:l.marketId||'',name:m?.name||l.name.trim(),qty:Number(l.qty),unit:normUnit(l.unit)||l.unit|| (m?baseCode(m):'')};});
+ const err=document.getElementById('recipe-editor-error');
+ if(!name){err.textContent='Please enter a recipe name.';return;}
+ if(!lines.length){err.textContent='Add at least one ingredient with a quantity greater than zero.';return;}
+ const id=document.getElementById('recipe-edit-id').value;
+ const old=id?recipes.find(x=>x.id===id):null;
+ const item={...(old||{}),id:id||newId(),name,note:document.getElementById('recipe-edit-note').value.trim(),labour:Math.max(0,Number(document.getElementById('recipe-edit-labour').value)||0),ingredients:lines};
+ if(old)recipes=recipes.map(x=>x.id===id?item:x);else recipes.push(item);
+ persistRecipes();renderRecipes();renderRecipeDropdown();closeRecipeEditor();toast(old?'✓ Recipe updated and synced':'✓ Recipe added and synced');
+}
+
 function importRecipeCards() {
   const existing = recipes.filter(r => RECIPE_CARDS.some(c => c.name.toLowerCase() === r.name.toLowerCase()));
   if (existing.length && !confirm(`${existing.length} of the ${RECIPE_CARDS.length} card recipes are already in your Recipes (e.g. ${existing.slice(0, 3).map(r => r.name).join(', ')}).\n\nReplace them with fresh copies from the cards? Lines you linked by hand keep working — the links are remembered on your Market items.`)) return;
@@ -4362,6 +4377,7 @@ function fmtQty(q) {
 }
 function renderRecipes() {
   const el = document.getElementById('recipes-list');
+  const addBtn=document.getElementById('add-recipe-editor-btn'); if(addBtn) addBtn.style.display='';
   if (el) {
     if (!recipes.length) {
       el.innerHTML = '<div class="empty-state"><div class="empty-icon">📖</div>No saved recipes yet. Import the recipe cards above, or build an order and click "Save as recipe".</div>';
@@ -4390,7 +4406,7 @@ function renderRecipes() {
             <details class="rl"><summary>Show ingredients &amp; costs</summary>${lines}</details>
           </div>
           <div class="order-actions">
-            <button class="btn btn-sm" onclick="deleteRecipe('${r.id}')">Delete</button>
+            <button class="btn btn-sm" onclick="openRecipeEditor('${r.id}')">Edit</button> <button class="btn btn-sm" onclick="deleteRecipe('${r.id}')">Delete</button>
           </div>
         </div>`;
       }).join('');
@@ -4508,8 +4524,6 @@ function loadSettingsForm() {
   document.getElementById('biz-account').value = settings.mpesaAccount || '';
   document.getElementById('biz-margin').value = settings.defaultMargin || 30;
   document.getElementById('biz-deposit').value = settings.defaultDeposit || 50;
-  document.getElementById('sb-url').value = sbConfig.url || '';
-  document.getElementById('sb-key').value = sbConfig.key || '';
 }
 
 function saveSettings() {
