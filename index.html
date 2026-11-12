@@ -329,6 +329,53 @@
   .rl-cost { text-align: right; color: var(--text); font-weight: 500; }
   @media (max-width: 480px) { .rl-line { grid-template-columns: 1fr 1fr; } .link-ctrl { flex: 1 1 100%; } }
 
+
+  /* Mobile-first refinements */
+  input, select, textarea, button { touch-action: manipulation; }
+  .form-input, select.form-input { min-height: 42px; font-size: 16px; }
+  .btn { min-height: 40px; }
+  .nav { overflow-x: auto; flex-wrap: nowrap; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
+  .nav::-webkit-scrollbar { display:none; }
+  .nav-btn { flex: 0 0 auto; white-space: nowrap; padding: 11px 13px; }
+  .ing-name-wrap { position:relative; min-width:0; }
+  .ing-search-results { display:none; position:absolute; left:0; right:0; top:calc(100% + 3px); z-index:30; max-height: min(260px, 42vh); overflow-y:auto; background:var(--gray); border:1px solid var(--border2); border-radius:9px; box-shadow:0 8px 24px rgba(0,0,0,.22); }
+  .ing-search-results.open { display:block; }
+  .ing-search-option { display:block; width:100%; text-align:left; padding:12px 11px; border:0; border-bottom:1px solid var(--border); background:transparent; color:var(--text); font:inherit; font-size:14px; min-height:44px; }
+  .ing-search-option:last-child { border-bottom:0; }
+  .ing-search-option:active { background:var(--purple-light); }
+  @media(max-width:600px) {
+    .app { width:100%; max-width:none; padding:0 12px 100px; }
+    .header { padding:12px 0; margin-bottom:12px; gap:8px; }
+    .logo-name { font-size:15px; }
+    .logo-sub { font-size:10px; }
+    .nav { margin:0 -12px 16px; padding:0 12px; }
+    .card { padding:13px; }
+    .form-grid { grid-template-columns:1fr !important; gap:0; }
+    .form-group { margin-bottom:12px; }
+    .ing-header { display:none; }
+    .ing-row { grid-template-columns:minmax(0,1fr) minmax(68px,.38fr); gap:8px; padding:10px; margin:0 0 9px; border:1px solid var(--border); border-radius:10px; background:var(--gray); }
+    .ing-name-wrap { grid-column:1 / -1; }
+    .ing-row .ing-unit { grid-column:1; }
+    .ing-row > span[id^="ing-cost-"] { grid-column:2; justify-content:flex-end; }
+    .ing-row .ing-del { grid-column:2; justify-self:end; }
+    .ing-row > input[type=number] { grid-column:1; }
+    .ing-row .form-input { min-height:44px; font-size:16px !important; }
+    .order-row { align-items:flex-start; flex-wrap:wrap; }
+    .order-right { margin-left:auto; }
+    .order-actions { flex-wrap:wrap; }
+    .btn-row { gap:7px; }
+    .btn-row .btn { flex:1 1 auto; justify-content:center; }
+    .total-box { padding:12px; }
+    .total-row { gap:10px; font-size:12px; }
+    .modal { width:calc(100vw - 20px) !important; max-height:88vh; overflow:auto; padding:16px !important; }
+    .modal-bg { padding:10px; align-items:flex-start; overflow-y:auto; }
+    .rl-line { grid-template-columns:1fr 1fr !important; }
+  }
+  @media(max-width:380px) {
+    .conn-badge { font-size:10px; padding:4px 6px; }
+    .logo-icon { width:32px; height:32px; }
+    .nav-btn { padding:10px 11px; font-size:12px; }
+  }
 </style>
 <script src="./config.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -3305,11 +3352,14 @@ function renderIngredients() {
     const hint = ing.origName && item && normKey(ing.origName) !== normKey(item.name)
       ? `title="Recipe says “${h(ing.origName)}”"` : (bad && ing.name ? `title="“${h(ing.name)}” isn't linked to your Market yet — pick the matching item"` : '');
     return `<div class="ing-row">
-      <input class="form-input${bad && lc.status === 'unlinked' ? ' input-warn' : ''}" list="market-options-datalist"
-        style="font-size:12px;padding:7px 8px;" ${hint}
-        placeholder="Search ingredient..."
-        value="${esc(isFree ? (ing.name || 'Free item') : shownName)}"
-        onchange="setIngFromMarketByName('${ing.id}', this.value); recalc();" />
+      <div class="ing-name-wrap">
+        <input class="form-input${bad && lc.status === 'unlinked' ? ' input-warn' : ''}"
+          style="font-size:12px;padding:7px 8px;" ${hint}
+          placeholder="Search ingredient..." autocomplete="off" autocapitalize="off"
+          value="${esc(isFree ? (ing.name || 'Free item') : shownName)}"
+          onfocus="showIngSearch('${ing.id}')" oninput="searchIngOptions('${ing.id}', this.value)" />
+        <div class="ing-search-results" id="ing-search-${ing.id}"></div>
+      </div>
       <input class="form-input" type="number" min="0" step="0.01"
         style="font-size:12px;padding:7px 8px;"
         placeholder="qty"
@@ -3321,6 +3371,39 @@ function renderIngredients() {
     </div>`;
   }).join('');
 }
+function showIngSearch(ingId) {
+  const input = document.querySelector(`.ing-name-wrap input[onfocus="showIngSearch('${ingId}')"]`);
+  if (input) searchIngOptions(ingId, input.value);
+}
+function searchIngOptions(ingId, query) {
+  const box = document.getElementById(`ing-search-${ingId}`);
+  const ing = ingredients.find(x => x.id === ingId);
+  if (!box || !ing) return;
+  const q = String(query || '').trim().toLowerCase();
+  ing.name = String(query || ''); ing.marketId = '';
+  const matches = market.filter(m => !q || m.name.toLowerCase().includes(q)).sort((a,b)=>a.name.localeCompare(b.name)).slice(0,30);
+  box.innerHTML = matches.map(m => `<button type="button" class="ing-search-option" onclick="chooseIngSearch('${ingId}','${String(m.id).replace(/\\/g,'\\\\').replace(/'/g,"\\'")}')">${h(m.name)} <span style="float:right;color:var(--text3);font-size:12px">${kes(m.packPrice)}</span></button>`).join('')
+    + (q && !matches.some(m=>normKey(m.name)===normKey(query)) ? `<button type="button" class="ing-search-option" onclick="chooseCustomIng('${ingId}')">Use “${h(query)}” as a custom ingredient</button>` : '');
+  box.classList.add('open');
+}
+function chooseIngSearch(ingId, marketId) {
+  const ing = ingredients.find(x => x.id === ingId); const item = market.find(m => m.id === marketId);
+  if (!ing || !item) return;
+  ing.marketId = item.id; ing.name = item.name; ing.origName = item.name;
+  if (!unitOptionsFor(item).includes(normUnit(ing.unit))) ing.unit = baseCode(item);
+  renderIngredients(); recalc();
+}
+function chooseCustomIng(ingId) {
+  const ing = ingredients.find(x => x.id === ingId); if (!ing) return;
+  const box = document.getElementById(`ing-search-${ingId}`);
+  const input = box?.parentElement.querySelector('input');
+  ing.name = input?.value.trim() || ''; ing.marketId = '';
+  if (box) box.classList.remove('open');
+  recalc();
+}
+document.addEventListener('click', function(e) {
+  if (!e.target.closest('.ing-name-wrap')) document.querySelectorAll('.ing-search-results.open').forEach(x=>x.classList.remove('open'));
+});
 function setIngFromMarketByName(ingId, name) {
   const ing = ingredients.find(i => i.id === ingId);
   if (!ing) return;
